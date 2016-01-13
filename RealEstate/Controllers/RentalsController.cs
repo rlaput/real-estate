@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Driver.Linq;
 using MongoDB.Driver.Builders;
 using RealEstate.App_Start;
 using RealEstate.Rentals;
@@ -27,15 +28,24 @@ namespace RealEstate.Controllers
             return View(model);
         }
 
-        private MongoDB.Driver.MongoCursor<Rental> FilterRentals(RentalsFilter filters)
+        private IEnumerable<Rental> FilterRentals(RentalsFilter filters)
         {
-            if (!filters.PriceLimit.HasValue)
+            IQueryable<Rental> rentals = Context.Rentals.AsQueryable()
+                .OrderBy(r => r.Price);
+
+            if (filters.MinimumRooms.HasValue)
             {
-                return Context.Rentals.FindAll();
+                rentals = rentals
+                    .Where(r => r.NumberOfRooms >= filters.MinimumRooms);
             }
 
-            var query = Query<Rental>.LTE(r => r.Price, filters.PriceLimit);
-            return Context.Rentals.Find(query);
+            if (filters.PriceLimit.HasValue)
+            {
+                var query = Query<Rental>.LTE(r => r.Price, filters.PriceLimit);
+                rentals = rentals.Where(r => query.Inject());
+            }
+
+            return rentals;
         }
 
         public ActionResult Post()
@@ -76,6 +86,13 @@ namespace RealEstate.Controllers
         {
             Context.Rentals.Remove(Query.EQ("_id", new ObjectId(id)));
             return RedirectToAction("Index");
+        }
+
+        public string PriceDistribution()
+        {
+            return new QueryPriceDistribution()
+            .Run(Context.Rentals)
+            .ToJson();
         }
     }
 }
