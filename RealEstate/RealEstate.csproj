@@ -143,6 +143,8 @@
     <Compile Include="Rentals\PostRental.cs" />
     <Compile Include="Rentals\PriceAdjustment.cs" />
     <Compile Include="Rentals\Rental.cs" />
+    <Compile Include="Rentals\RentalsFilter.cs" />
+    <Compile Include="Rentals\RentalsList.cs" />
     <Compile Include="Settings.cs" />
   </ItemGroup>
   <ItemGroup>

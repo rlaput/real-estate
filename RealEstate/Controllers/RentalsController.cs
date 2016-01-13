@@ -14,10 +14,28 @@ namespace RealEstate.Controllers
     {
         public readonly RealEstateContext Context = new RealEstateContext();
 
-        public ActionResult Index()
+        public ActionResult Index(RentalsFilter filters)
         {
-            var rentals = Context.Rentals.FindAll();
-            return View(rentals);
+            var rentals = FilterRentals(filters);
+
+            var model = new RentalsList
+            {
+                Rentals = rentals,
+                Filters = filters
+            };
+
+            return View(model);
+        }
+
+        private MongoDB.Driver.MongoCursor<Rental> FilterRentals(RentalsFilter filters)
+        {
+            if (!filters.PriceLimit.HasValue)
+            {
+                return Context.Rentals.FindAll();
+            }
+
+            var query = Query<Rental>.LTE(r => r.Price, filters.PriceLimit);
+            return Context.Rentals.Find(query);
         }
 
         public ActionResult Post()
